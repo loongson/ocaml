@@ -1046,7 +1046,8 @@ AS_IF([test x"$supports_shared_libraries" = 'xtrue'],
     [aarch64-*-linux*], [natdynlink=true],
     [aarch64-*-freebsd*], [natdynlink=true],
     [aarch64-*-openbsd*], [natdynlink=true],
-    [riscv*-*-linux*], [natdynlink=true])])
+    [riscv*-*-linux*], [natdynlink=true],
+    [loongarch*-*-linux*], [natdynlink=true])])
 
 AS_CASE([$enable_native_toplevel,$natdynlink],
   [yes,false],
@@ -1163,7 +1164,9 @@ AS_CASE([$host],
   [x86_64-*-cygwin*],
     [arch=amd64; system=cygwin],
   [riscv64-*-linux*],
-    [arch=riscv; model=riscv64; system=linux]
+    [arch=riscv; model=riscv64; system=linux],
+  [loongarch64-*-linux*],
+    [arch=loongarch64; system=linux]
 )
 
 AS_IF([test x"$enable_native_compiler" = "xno"],
@@ -1248,7 +1251,7 @@ default_aspp="$CC -c"
 AS_CASE([$as_target,$ocaml_cv_cc_vendor],
   [*-*-linux*,gcc-*],
     [AS_CASE([$as_cpu],
-      [x86_64|arm*|aarch64*|i[[3-6]]86|riscv*],
+      [x86_64|arm*|aarch64*|i[[3-6]]86|riscv*|loongarch*],
         [default_as="${toolpref}as"])],
   [i686-pc-windows,*],
     [default_as="ml -nologo -coff -Cp -c -Fo"

@@ -23,6 +23,7 @@
           (glob_files power/*.ml)
           (glob_files riscv/*.ml)
           (glob_files s390x/*.ml))
+          (glob_files loongarch64/*.ml)
  (action  (bash "cp `grep '^ARCH=' %{conf} | cut -d'=' -f2`/*.ml .")))
 
 (rule
@@ -35,7 +36,8 @@
           i386/emit.mlp
           power/emit.mlp
           riscv/emit.mlp
-          s390x/emit.mlp)
+          s390x/emit.mlp
+          loongarch64/emit.mlp)
  (action
    (progn
      (with-stdout-to contains-input-name
