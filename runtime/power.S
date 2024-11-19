@@ -358,16 +358,16 @@
 caml_system__code_begin:
 
 /* Reallocate the stack when it is too small. */
-/* Desired size is passed in register TMP2. */
+/* Desired size is passed in register r27. */
 
 FUNCTION caml_call_realloc_stack
    /* Save return address in caller's frame. */
         mflr    0
         std     0, LR_SAVE(SP)
    /* Save all registers, as well as ALLOC_PTR and TRAP_PTR */
-        SAVE_ALL_REGS  /* TMP2 is preserved */
+        SAVE_ALL_REGS  /* r27 is preserved */
    /* Recover desired size, to be passed in r3 */
-        mr      3, TMP2
+        mr      3, 27
    /* Switch stacks and call caml_try_realloc_stack */
         SWITCH_OCAML_TO_C
         Far_call(caml_try_realloc_stack)
@@ -445,8 +445,9 @@ FUNCTION caml_c_call
         mr      2, C_CALL_TOC   /* restore current TOC */
     /* Restore return address (in register C_CALL_RET_ADDR, preserved by C) */
         mtlr    C_CALL_RET_ADDR
-    /* Reload allocation pointer*/
+    /* Reload new allocation pointer and exception pointer */
         ld      ALLOC_PTR, Caml_state(young_ptr)
+        ld      TRAP_PTR, Caml_state(exn_handler)
 #if defined(WITH_THREAD_SANITIZER)
         TSAN_SETUP_C_CALL 16
     /* Save return value registers. Since the called function could be anything,
@@ -497,8 +498,9 @@ FUNCTION caml_c_call_stack_args
         add     SP, SP, STACK_ARG_BYTES
     /* Restore return address (in register C_CALL_RET_ADDR, preserved by C) */
         mtlr    C_CALL_RET_ADDR
-    /* Reload allocation pointer*/
+    /* Reload new allocation pointer and exception pointer */
         ld      ALLOC_PTR, Caml_state(young_ptr)
+        ld      TRAP_PTR, Caml_state(exn_handler)
     /* Switch from C to OCaml */
         SWITCH_C_TO_OCAML
     /* Return to caller */

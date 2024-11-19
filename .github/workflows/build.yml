@@ -11,11 +11,13 @@ on:
 # Restrict the GITHUB_TOKEN
 permissions: {}
 
-# List of test directories for the debug-s4096 and linux-O0 jobs.
-# These directories are selected because of their tendencies to reach corner
-# cases in the runtime system.
 env:
+  # List of test directories for the debug-s4096 and linux-O0 jobs. These
+  # directories are selected because of their tendencies to reach corner cases
+  # in the runtime system.
   PARALLEL_TESTS: parallel callback gc-roots weak-ephe-final
+  # Fully print commands executed by Make
+  # MAKEFLAGS: V=1
 
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
 # Concurrent workflows are grouped by the PR or branch that triggered them
@@ -37,7 +39,7 @@ jobs:
       manual_changed: ${{ steps.manual.outputs.manual_changed }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Check for manual changes
@@ -64,7 +66,7 @@ jobs:
       - name: Prepare Artifact
         run: tar --zstd -cf /tmp/sources.tar.zstd .
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: compiler
           path: /tmp/sources.tar.zstd
@@ -92,7 +94,7 @@ jobs:
             name: extra (debug-s4096)
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: compiler
       - name: Unpack Artifact
@@ -150,15 +152,17 @@ jobs:
           - name: linux-O0
             os: ubuntu-latest
             config_arg: CFLAGS='-O0'
-          - name: macos
-            os: macos-latest
+          - name: macos-x86_64
+            os: macos-13
+          - name: macos-arm64
+            os: macos-14
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: OS Dependencies
-        if: runner.os == 'MacOS'
+        if: runner.os == 'macOS'
         run: brew install parallel
       - name: configure tree
         run: |
@@ -190,15 +194,17 @@ jobs:
         run: |
           apt-get update
           apt-get install -y git gcc make parallel
+          adduser --disabled-password --gecos '' ocaml
       - name: Checkout
         # See https://github.com/actions/checkout/issues/334
         uses: actions/checkout@v1
       - name: configure tree
         run: |
-          MAKE_ARG=-j bash -xe tools/ci/actions/runner.sh configure
+          chown -R ocaml:ocaml .
+          MAKE_ARG=-j su ocaml -c "bash -xe tools/ci/actions/runner.sh configure"
       - name: Build
         run: |
-          MAKE_ARG=-j bash -xe tools/ci/actions/runner.sh build
+          MAKE_ARG=-j su ocaml -c "bash -xe tools/ci/actions/runner.sh build"
       - name: Run the testsuite
         run: |
-          bash -xe tools/ci/actions/runner.sh test
+          su ocaml -c "bash -xe tools/ci/actions/runner.sh test"
