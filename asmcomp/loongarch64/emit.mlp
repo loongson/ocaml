@@ -303,10 +303,7 @@ let emit_instr env i =
       `la.local {emit_reg reg_tmp}, {emit_label lbl} \n`;
       `	fld.d	{emit_reg i.res.(0)}, {emit_reg reg_tmp}, 0\n`
   | Lop(Iconst_symbol s) ->     (* FIXME la.global assert error in binutils*)
-      `pcaddi {emit_reg i.res.(0)}, 0 \n`;
-      `b 7112233f\n`;
-      `.dword {emit_symbol s}\n`;
-      `7112233: ld.d {emit_reg i.res.(0)}, {emit_reg i.res.(0)}, 8\n`
+      `la.global {emit_reg i.res.(0)}, {emit_symbol s}\n`
   | Lop(Icall_ind) ->
       `	jirl	$ra, {emit_reg i.arg.(0)}, 0\n`;
       record_frame env i.live (Dbg_other i.dbg)
