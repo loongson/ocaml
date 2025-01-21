@@ -353,6 +353,7 @@ FUNCTION(caml_c_call)
         jirl    $ra, ADDITIONAL_ARG, 0
     /* Reload alloc ptr */
         ld.d      ALLOC_PTR, Caml_state(young_ptr)
+	ld.d     TRAP_PTR, Caml_state(exn_handler)
     /* Load ocaml stack */
         SWITCH_C_TO_OCAML
     /* Return */
@@ -394,6 +395,7 @@ FUNCTION(caml_c_call_stack_args)
         move      $sp, $s2
     /* Reload alloc ptr */
         ld.d      ALLOC_PTR, Caml_state(young_ptr)
+	ld.d     TRAP_PTR, Caml_state(exn_handler)
     /* Switch from C to OCaml */
         SWITCH_C_TO_OCAML
     /* Return */
@@ -680,6 +682,7 @@ L(do_perform):
         a2: old_stack
         a3: last_fiber */
 
+	st.d	  $a3, $a1, 8		   /* Set the last fiber field in the continuation */
         ld.d      $t3, Stack_handler($a2)  /* $t3 := old stack -> handler */
         ld.d      $t4, Handler_parent($t3) /* t4 := parent stack */
         beqz    $t4, 1f
@@ -717,23 +720,21 @@ END_FUNCTION(caml_reperform)
 FUNCTION(caml_resume)
     /*  $a0: new fiber
         $a1: fun
-        a2: arg */
+        $a2: arg
+	$a3: last_fiber */
         addi.d    $a0, $a0, -1 /* $a0 = Ptr_val($a0) */
-        ld.d      $a3, $a1, 0   /* code pointer */
+        ld.d      $a4, $a1, 0   /* code pointer */
     /* Check if stack null, then already used */
-        beqz    $a0, 2f
-    /* Find end of list of stacks (put in $t2) */
-        move      TMP, $a0
-1:      ld.d      $t2, Stack_handler(TMP)
-        ld.d      TMP, Handler_parent($t2)
-        bnez    TMP, 1b
+	beqz	  $a0, 1f
     /* Add current stack to the end */
+	addi.d	  $a3, $a3, -1 /* a3 = Ptr_val(a3) */
+	ld.d	  $t2, Stack_handler($a3)
         ld.d      $t3, Caml_state(current_stack)
         st.d      $t3, Handler_parent($t2)
         SWITCH_OCAML_STACKS $t3, $a0
         move      $a0, $a2
-        jr      $a3
-2:      la.global      ADDITIONAL_ARG, caml_raise_continuation_already_resumed
+        jr      $a4
+1:      la.global      ADDITIONAL_ARG, caml_raise_continuation_already_resumed
         b       caml_c_call
 END_FUNCTION(caml_resume)
 
