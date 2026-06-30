@@ -97,6 +97,16 @@
 #define CODE_POINTER_MARK_BIT 0
 #endif
 
+#ifdef TARGET_loongarch64
+/* Size of the gc_regs structure, in words.
+   See loongarch64.S and loongarch64/proc.ml for the indices */
+#define Wosize_gc_regs (2 + 23 /* int regs */ + 24 /* float regs */)
+#define Saved_return_address_raw(sp) *((intnat *)((sp) - 8))
+#define First_frame(sp) ((sp) + 16)
+#define Saved_gc_regs(sp) (*(value **)((sp) + 24))
+#define Stack_header_size 32
+#endif
+
 #ifdef CODE_POINTER_MARK_BIT
 #define CODE_POINTER_MARK_MASK ((uintnat) 1 << CODE_POINTER_MARK_BIT)
 #define Already_scanned(sp, retaddr) ((retaddr) & CODE_POINTER_MARK_MASK)
